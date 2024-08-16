@@ -75,6 +75,8 @@
 /* enable stack limitation */
 #define CONFIG_STACK_CHECK
 #endif
+#undef CONFIG_STACK_CHECK
+// whats the right way to set
 
 
 /* dump object free */

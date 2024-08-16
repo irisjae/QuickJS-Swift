@@ -24,8 +24,8 @@ import Foundation
 import QuickJSC
 
 public class JSContext {
-    let core: JSContextWrapper
-    let runtime: JSRuntime
+    public let core: JSContextWrapper
+    public let runtime: JSRuntime
 
     required init?(_ runtime: JSRuntime, context: OpaquePointer) {
         self.runtime = runtime
@@ -114,7 +114,7 @@ public class JSContext {
         return module
     }
     
-    func flushPendingJobs() {
+    public func flushPendingJobs() {
         var ctx: OpaquePointer?
         while true {
             if JS_ExecutePendingJob(self.runtime.jsInstance, &ctx) <= 0 {

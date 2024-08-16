@@ -50,7 +50,8 @@ public class JSContextWrapper {
     }
     
     deinit {
-        JS_FreeContext(context)
+        // leak memory for poc
+        // JS_FreeContext(context)
     }
     
     var opaque: JSContext? {

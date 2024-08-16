@@ -38,12 +38,12 @@ extension JSCValue {
     }
 }
 
-public class JSValue {
+public class JSValue: ConvertibleWithJavascript {
     var cValue: JSCValue
     var context: JSContextWrapper?
     var autoFree: Bool = true
 
-    required init(_ context: JSContextWrapper?, value: JSCValue, dup: Bool = false, autoFree: Bool = true) {
+    public required init(_ context: JSContextWrapper?, value: JSCValue, dup: Bool = false, autoFree: Bool = true) {
         self.context = context
         if dup {
             self.cValue = self.context!.dup(value)
@@ -66,50 +66,63 @@ public class JSValue {
     
     deinit {
         if autoFree {
-            context?.free(cValue)
+		// leak memory for poc
+            // context?.free(cValue)
         }
+    }
+
+
+
+    public required init(_ context: JSContextWrapper, value: JSCValue) {
+        self.context = context
+        self.cValue = value
+        self.autoFree = true
+    }
+    
+    public func jsValue(_ context: JSContextWrapper) -> JSValue {
+        return self
     }
 }
 
 extension JSValue {
-    static var undefined: JSValue {
+    public static var undefined: JSValue {
         return JSValue(nil, value: .undefined)
     }
-    static var null: JSValue {
+    public static var null: JSValue {
         return JSValue(nil, value: .null)
     }
 }
 
 extension JSValue {
-    var isFunction: Bool {
+    public var isFunction: Bool {
         guard let context = context?.context else { return false }
         return JS_IsFunction(context, cValue) != 0
     }
     
-    var isException: Bool {
+    public var isException: Bool {
         return JS_IsException(cValue) != 0
     }
     
-    func getValue<T:ConvertibleWithJavascript>() -> T? {
+    public func getValue<T:ConvertibleWithJavascript>() -> T? {
         return context != nil ? T(context!, value: cValue) : nil
     }
     
-    var double: Double? {
+    public var double: Double? {
         guard self.context != nil else { return nil }
         return self.getValue()
     }
     
-    var int: Int? {
+    public var int: Int? {
         guard self.context != nil else { return nil }
         return self.getValue()
     }
     
-    var string: String? {
+    public var string: String? {
         guard self.context != nil else { return nil }
         return self.getValue()
     }
     
-    var error: JSError? {
+    public var error: JSError? {
         guard self.context != nil else { return nil }
         return self.getValue()
     }
@@ -139,7 +152,30 @@ extension String: ConvertibleWithJavascript {
     }
     
     public func jsValue(_ context: JSContextWrapper) -> JSValue {
-        let value = JS_NewString(context.context, self)
+        let value = JS_NewString(context.context, self.cString(using: .utf8))
+        return JSValue(context, value: value)
+    }
+}
+
+extension Bool: ConvertibleWithJavascript {
+    public init?(_ context: JSContextWrapper, value: JSCValue) {
+        if JS_IsBool(value) == 0 {
+            return nil
+        }
+        
+        let result = JS_ToBool(context.context, value)
+        if result < 0 {
+            return nil
+        } else if result == 0 {
+	    self = false
+	} else {
+	    self = true
+	}
+    }
+    
+    public func jsValue(_ context: JSContextWrapper) -> JSValue {
+	let jsBool: Int32 = self ? 1 : 0
+        let value = JS_NewBool(context.context, jsBool)
         return JSValue(context, value: value)
     }
 }
@@ -276,6 +312,7 @@ extension Array: ConvertibleWithJavascript where Element: ConvertibleWithJavascr
         fatalError("TODO")
     }
 }
+
 
 public enum JSError: Error, ConvertibleWithJavascript {
     case exception

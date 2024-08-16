@@ -60,6 +60,9 @@ public class JSFunction : JSValue {
     required init(_ context: JSContextWrapper?, value: JSCValue, dup: Bool = false, autoFree: Bool = true) {
         fatalError("init(_:value:dup:autoFree) has not been implemented")
     }
+    required init(_ context: JSContextWrapper?, value: JSCValue) {
+        fatalError("init(_:value) has not been implemented")
+    }
     
     func buildFunction() {
         guard let context = self.context else {

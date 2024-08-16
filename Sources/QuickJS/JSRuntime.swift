@@ -49,7 +49,8 @@ public class JSRuntime {
     }
     
     deinit {
-        JS_FreeRuntime(self.jsInstance)
+        // leak memory for poc
+        // JS_FreeRuntime(self.jsInstance)
     }
     
     public func createContext() -> JSContext? {
